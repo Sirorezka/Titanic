@@ -8,8 +8,9 @@ Revised: 28 March 2014
 
 import csv as csv
 import numpy as np
+import graphviz as gv
 from sklearn import tree
-
+from my_functions import *
 
 
 
@@ -43,17 +44,36 @@ def main ():
 	print ("\n")
 	print ("before removing")
 	print(header)
-	print (data[0:,0::])
+	print (data[35:44,0::])
 
 	print ("\n")
 	print ("after removing")
-	data = np.delete(data,[3,8,11],1)
+	col_remove = [0, 3, 5, 8, 10,11]               # Column 5 represent age
+	data = np.delete(data, col_remove,1)
+	header = np.delete(header,col_remove,0)
 	print (header)
-	print(data[0::,0::])
+	print(data[35:44,:])
+
+	print(data[1:15,:])
 
 
+	print(sum(data == ''))
+	#print (data[0::,0])
 	clf = tree.DecisionTreeClassifier()
-	clf = clf.fit( data[0::,2::],data[0::,1])
+	clf = clf.fit( data[0::,1::],data[0::,0])
+
+	#tree.export_graphviz(clf, out_file='tree.dot')  
+
+	#visualize_tree (clf,header[1:])
+	#graphviz.plot(tree)
+
+
+	g1 = gv.Graph(format='svg')
+	g1.node('A')
+	g1.node('B')
+	g1.edge('A', 'B')
+	filename = g1.render(filename='img/g1')
+	print (filename)
 
 	quit()
 
