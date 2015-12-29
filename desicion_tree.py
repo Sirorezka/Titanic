@@ -8,7 +8,7 @@ Revised: 28 March 2014
 
 import csv as csv
 import numpy as np
-from sklearn.tree import DecisionTreeClassifier
+
 
 my_project_dir = "kaggle_data\\"
 print (my_project_dir + 'train.csv')
@@ -75,7 +75,7 @@ header = next(test_file_object)
 # Finally, loop through each row in the train file, and look in column index [3] (which is 'Sex')
 # Write out the PassengerId, and my prediction.
 
-predictions_file = open("output/gendermodel.csv", "w")
+predictions_file = open("gendermodel.csv", "w")
 predictions_file_object = csv.writer(predictions_file)
 predictions_file_object.writerow(["PassengerId", "Survived"])	# write the column headers
 for row in test_file_object:									# For each row in test file,
