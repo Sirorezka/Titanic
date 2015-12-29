@@ -8,7 +8,7 @@ Revised: 28 March 2014
 
 import csv as csv
 import numpy as np
-from sklearn.tree import DecisionTreeClassifier
+
 
 my_project_dir = "kaggle_data\\"
 print (my_project_dir + 'train.csv')
