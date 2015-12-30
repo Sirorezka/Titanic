@@ -51,6 +51,8 @@ def main ():
 	col_remove = [0, 3, 5, 8, 10,11]               # Column 5 represent age
 	data = np.delete(data, col_remove,1)
 	header = np.delete(header,col_remove,0)
+
+
 	print (header)
 	print(data[35:44,:])
 
@@ -59,16 +61,24 @@ def main ():
 
 	print(sum(data == ''))
 	#print (data[0::,0])
-	clf = tree.DecisionTreeClassifier()
-	clf = clf.fit( data[0::,1::],data[0::,0])
 
-	#tree.export_graphviz(clf, out_file='tree.dot')  
+	y = data[0::,0]
+	X = data[0::,1::]
+	feature_names = header[1:]
+	clf = tree.DecisionTreeClassifier()
+	clf = clf.fit(X,y)
+
+
+
+	visualize_tree2 (clf, feature_names,["Dead","Survived"])
+
+	#tree.export_graphviz(clf, out_file='img/tree.dot')  
 
 	#visualize_tree (clf,header[1:])
 	#graphviz.plot(tree)
 
 
-	g1 = gv.Graph(format='svg')
+	g1 = gv.Graph(format='png')
 	g1.node('A')
 	g1.node('B')
 	g1.edge('A', 'B')
