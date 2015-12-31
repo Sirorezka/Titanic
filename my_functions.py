@@ -4,8 +4,10 @@ from sklearn import tree
 from IPython.display import Image  
 from io import StringIO, TextIOBase 
 import pydot
+import chardet
 
-def my_data_processing ():
+
+def my_data_processing (data):
 
 	pass;
 
@@ -33,8 +35,6 @@ def visualize_tree(tree, feature_names):
 
 def visualize_tree2 (clf, my_feature_names, class_names = []):
 
-    print ("WOWW!")
-
     dot_data = StringIO()  
     tree.export_graphviz(clf, out_file=dot_data
                          ,feature_names=my_feature_names  
@@ -42,8 +42,24 @@ def visualize_tree2 (clf, my_feature_names, class_names = []):
                          ,filled=True, rounded=True  
                          ,special_characters=True)  
 
-    
-    print ("HOOORAY!")
-    print (dot_data.getvalue()[1:100])
-    graph = pydot.graph_from_dot_data(dot_data.getvalue())  
-    Image(graph.create_png()) 
+
+
+    print ("WOWW!")
+    print (type(dot_data.getvalue()))
+
+    f = open('img\\tree.dot', 'r')
+
+    graph = pydot.graph_from_dot_data(f.read())
+    #Image(graph.create_png()) 
+
+
+def save_tree_img (filename, clf, my_feature_names, class_names = []):
+
+        print (my_feature_names)
+        tree.export_graphviz(clf, out_file=filename
+                         ,feature_names=my_feature_names 
+                         ,class_names=class_names
+                         ,filled=True
+                         #,rounded=True  
+                         #,special_characters=True
+                         )  

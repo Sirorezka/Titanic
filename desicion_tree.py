@@ -10,6 +10,7 @@ import csv as csv
 import numpy as np
 import graphviz as gv
 from sklearn import tree
+from sklearn.cross_validation import cross_val_score
 from my_functions import *
 
 
@@ -41,13 +42,7 @@ def main ():
 	data[0::,4] = is_female
 	header[4] = "is_female"
 
-	print ("\n")
-	print ("before removing")
-	print(header)
-	print (data[35:44,0::])
 
-	print ("\n")
-	print ("after removing")
 	col_remove = [0, 3, 5, 8, 10,11]               # Column 5 represent age
 	data = np.delete(data, col_remove,1)
 	header = np.delete(header,col_remove,0)
@@ -59,39 +54,31 @@ def main ():
 	print(data[1:15,:])
 
 
-	print(sum(data == ''))
-	#print (data[0::,0])
 
 	y = data[0::,0]
 	X = data[0::,1::]
 	feature_names = header[1:]
-	clf = tree.DecisionTreeClassifier()
+
+
+	rand_range = range(0, X.shape[0])
+	np.random.choice(rand_range, size=5, replace=False, p=None)
+
+
+	print (len(header))
+	print (X)
+	clf = tree.DecisionTreeClassifier(min_samples_leaf=20)
 	clf = clf.fit(X,y)
 
+	scores = cross_val_score(clf, X, y, cv = 8)
+	print (scores)
+	print(scores.mean())
 
 
-	visualize_tree2 (clf, feature_names,["Dead","Survived"])
+	save_tree_img ("img/tree.dot", clf, feature_names, class_names =["dead","survived"])
 
-	#tree.export_graphviz(clf, out_file='img/tree.dot')  
-
-	#visualize_tree (clf,header[1:])
-	#graphviz.plot(tree)
-
-
-	g1 = gv.Graph(format='png')
-	g1.node('A')
-	g1.node('B')
-	g1.edge('A', 'B')
-	filename = g1.render(filename='img/g1')
-	print (filename)
 
 	quit()
-
-
-
-
-
-	# First, read in test.csv
+	# Read test data
 	test_file = open(my_project_dir + 'test.csv', 'r')
 	test_file_object = csv.reader(test_file)
 	header = next(test_file_object)
