@@ -7,11 +7,6 @@ import pydot
 import chardet
 
 
-def my_data_processing (data):
-
-	pass;
-
-
 def visualize_tree(tree, feature_names):
     """Create tree png using graphviz.
 
@@ -63,3 +58,35 @@ def save_tree_img (filename, clf, my_feature_names, class_names = []):
                          #,rounded=True  
                          #,special_characters=True
                          )  
+
+
+
+
+# Basic test-control sampling procedure
+def generate_data_train_test (X, y, percent):
+    if (percent >=1 or percent<=0):
+        return
+
+
+    num_train_data = round(0.75 * X.shape[0],0)     # number of point to sample
+
+    rand_range = range(0, X.shape[0])
+    train_arr = np.array(np.random.choice(rand_range, size=num_train_data, replace=False)) # sampling train
+
+    X_train = X[train_arr,:]
+    y_train = y[train_arr]
+
+    indices = np.full(X.shape[0], True, bool)
+    indices[train_arr] = False
+    X_test = X[indices,:]
+    y_test = y[indices]
+
+
+    return X_train, y_train, X_test, y_test
+
+
+
+
+def my_data_processing (data):
+
+    pass;

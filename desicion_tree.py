@@ -48,56 +48,86 @@ def main ():
 	header = np.delete(header,col_remove,0)
 
 
-	print (header)
-	print(data[35:44,:])
 
-	print(data[1:15,:])
-
-
-
+	### Collecting data for model
 	y = data[0::,0]
 	X = data[0::,1::]
 	feature_names = header[1:]
 
 
-	rand_range = range(0, X.shape[0])
-	np.random.choice(rand_range, size=5, replace=False, p=None)
+	### Making prediction based on data sampled from train set
+
+	X_train, y_train, X_test, y_test = generate_data_train_test (X,y,0.75)
+
+	clf = tree.DecisionTreeClassifier(min_samples_leaf=20)
+	clf = clf.fit (X_train,y_train)
+	y_predict = clf.predict(X_test)
+
+	predict_rate = round(sum(y_predict==y_test)/len(y_predict),2)
+	print ("\nPrediction score: ",predict_rate,"\n")
 
 
-	print (len(header))
-	print (X)
+
+
 	clf = tree.DecisionTreeClassifier(min_samples_leaf=20)
 	clf = clf.fit(X,y)
-
 	scores = cross_val_score(clf, X, y, cv = 8)
+	print ("Crossvalidation scores: ")
 	print (scores)
 	print(scores.mean())
+	print ("\n")
 
 
 	save_tree_img ("img/tree.dot", clf, feature_names, class_names =["dead","survived"])
 
 
-	quit()
+
 	# Read test data
 	test_file = open(my_project_dir + 'test.csv', 'r')
 	test_file_object = csv.reader(test_file)
-	header = next(test_file_object)
+	header_train = next(test_file_object)
 
-	# Also open the a new file so I can write to it. Call it something descriptive
-	# Finally, loop through each row in the train file, and look in column index [3] (which is 'Sex')
-	# Write out the PassengerId, and my prediction.
+	data_train = []
+	for row in test_file_object: 							# Skip through each row in the csv file,
+	    data_train.append(row[0:]) 
 
-	predictions_file = open("gendermodel.csv", "w")
+	data_train = np.array(data_train)
+
+	is_female = (data_train[0::,3]=='female')+0					# Converting sex to "is_female"
+	data_train[0::,3] = is_female
+	header_train[3] = "is_female"
+
+
+	print (header_train)
+	col_remove = [0, 2, 4, 7, 9,10]               # Column 5 represent age
+	pass_id = data_train[:,0]
+	data_train = np.delete(data_train, col_remove,1)
+	header_train = np.delete(header_train, col_remove,0)
+
+	# predicting missing fare:
+	rows_with_fares =  (data_train[::,4]!='')
+	all_fares = data_train[rows_with_fares,4].astype(np.float)
+	fare_mean = all_fares.mean()
+	data_train[data_train[::,4]=='',4] = fare_mean
+
+	#fare_predict = all_fares.sum()/all
+
+	y_predict = clf.predict(data_train)
+	pass_id, y_predict
+
+
+
+	predictions_file = open("output/decisionforest.csv", "w")
 	predictions_file_object = csv.writer(predictions_file)
-	predictions_file_object.writerow(["PassengerId", "Survived"])	# write the column headers
-	for row in test_file_object:									# For each row in test file,
-	    if row[3] == 'female':										# is it a female, if yes then
-	        predictions_file_object.writerow([row[0], "1"])			# write the PassengerId, and predict 1
-	    else:														# or else if male,
-	        predictions_file_object.writerow([row[0], "0"])			# write the PassengerId, and predict 0.
+	predictions_file_object.writerow(["PassengerId", "Survived"])	
+	#predictions_file_object.writerow([pass_id, y_predict])
+
+	for i in range(y_predict.shape[0]):														
+	    predictions_file_object.writerow([pass_id[i], y_predict[i]])			
+														
 
 	        
-	test_file.close()												# Close out the files.
+	test_file.close()												
 	predictions_file.close()
 
 
