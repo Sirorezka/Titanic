@@ -11,9 +11,11 @@ import numpy as np
 import graphviz as gv
 from sklearn import tree
 from sklearn.cross_validation import cross_val_score
+from sklearn import ensemble 
+from sklearn import linear_model
 from my_functions import *
-
-
+from sklearn import svm
+import xgboost as xgb
 
 def main ():
 
@@ -28,7 +30,6 @@ def main ():
 	    data.append(row[0:]) 								# adding each row to the data variable
 
 
-	# print (type(data))
 	data = np.array(data) 									# Then convert from a list to an array.
 
 
@@ -44,7 +45,7 @@ def main ():
 
 	### Collecting data for model
 	has_surv = (data[:,1] !='')
-	print (has_surv)
+	#print (has_surv)
 	n_par = int(sum(has_surv)*0.75) 
 	
 	# y = data[0:n_par,1]
@@ -55,33 +56,55 @@ def main ():
 
 
 	### Making prediction based on data sampled from train set
+	min = 0
+	param_min = [0,0]
+	mean = 0
+	param_mean = [0,0]
+	i_samples = 55
+	i_estimators = 460
 
 
-	clf = tree.DecisionTreeClassifier(min_samples_leaf=45)
-	clf = clf.fit(X,y)
-	scores = cross_val_score(clf, X, y, cv = 8)
+	clf = xgb.XGBClassifier(max_depth=5, n_estimators=300, learning_rate=0.05)
+	clf = clf.fit(X, y)
+
+	xgb.plot_importance(clf)
+
+	scores = cross_val_score(clf, X, y, cv = 8, n_jobs=-1)
+	print ("adaboost")
+	print ("survived: ",sum (y=='1')/len(y))
 	print (X.shape[0])
 	print ("Crossvalidation scores: ")
 	print (scores)
-	print("min: ",scores.min(),"mean: ", scores.mean())
+	print("min: ",scores.min(),"   mean:",scores.mean())
 	print ("\n")
+	if scores.min()>min: param_min = [i_samples, i_estimators]
+	if scores.mean()>mean: param_mean = [i_samples, i_estimators]
 
-	# y = data[n_par:sum(has_surv),1]
-	# X = data[n_par:sum(has_surv),2::]
-	# y_predict = clf.predict(X)
-	# print("Blind prediction: ", sum(y_predict==y)/len(y))
+	#print(clf.get_params(deep=True))
 
-	save_tree_img ("img/tree.dot", clf, feature_names, class_names =["dead","survived"])
+	print ("min: ", param_min)
+	print ("mean: ", param_mean)
+
+
+
+	y = data[n_par:sum(has_surv),1]
+	X = data[n_par:sum(has_surv),2::]
+	y_predict = clf.predict(X)
+	print ("survived: ",sum (y=='1')/len(y))
+	print("Blind prediction: ", sum(y_predict==y)/len(y))
+
+	#save_tree_img ("img/tree.dot", clf, feature_names, class_names =["dead","survived"])
 
 
 	# predicting data
 	x_id = data[~has_surv,0]
 	X = data[~has_surv,2::]
 	y_predict = clf.predict(X)
-	#print (y_predict)
+	print ("\ntest predict")
+	print ("survived: ",sum (y_predict=='1')/len(y_predict))
 
 
-	predictions_file = open("output/decisiontree.csv", "w", newline='')
+	predictions_file = open("output/svm.csv", "w", newline='')
 	predictions_file_object = csv.writer(predictions_file)
 	predictions_file_object.writerow(["PassengerId", "Survived"])	
 	#predictions_file_object.writerow([pass_id, y_predict])
