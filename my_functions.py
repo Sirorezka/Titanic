@@ -50,7 +50,7 @@ def visualize_tree2 (clf, my_feature_names, class_names = []):
 
 def save_tree_img (filename, clf, my_feature_names, class_names = []):
 
-        print (my_feature_names)
+        #print (my_feature_names)
         tree.export_graphviz(clf, out_file=filename
                          ,feature_names=my_feature_names 
                          ,class_names=class_names
