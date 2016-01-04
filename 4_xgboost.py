@@ -11,6 +11,7 @@ import numpy as np
 import graphviz as gv
 from sklearn import tree
 from sklearn.cross_validation import cross_val_score
+from sklearn.metrics import confusion_matrix
 from sklearn import ensemble 
 from sklearn import linear_model
 from my_functions import *
@@ -50,67 +51,62 @@ def main ():
 	
 	# y = data[0:n_par,1]
 	# X = data[0:n_par,2::]
-	y = data[has_surv,1]
+	y = data[has_surv,1].astype(float)
 	X = data[has_surv,2::]
+	x_id = data[~has_surv,0]
+	X_test = data[~has_surv,2::]
 	feature_names = header[2:]
 
 
-	### Making prediction based on data sampled from train set
-	min = 0
-	param_min = [0,0]
-	mean = 0
-	param_mean = [0,0]
-	i_samples = 55
-	i_estimators = 460
+
+	# specify validations set to watch performance
+	print (header)
+	T_train_xgb = xgb.DMatrix(X.astype(float), label=y.astype(float))
+	T_test_xgb = xgb.DMatrix(X_test.astype(float))
 
 
-	clf = xgb.XGBClassifier(max_depth=5, n_estimators=300, learning_rate=0.05)
-	clf = clf.fit(X, y)
 
-	xgb.plot_importance(clf)
+	def evalerror(preds, dtrain):
+	    labels = dtrain.get_label()
+	    y_predict = list(map (lambda x: int(x>0.5), preds))
+	    return 'myerror', sum(labels != y_predict) / len(labels)
 
-	scores = cross_val_score(clf, X, y, cv = 8, n_jobs=-1)
-	print ("adaboost")
-	print ("survived: ",sum (y=='1')/len(y))
-	print (X.shape[0])
-	print ("Crossvalidation scores: ")
-	print (scores)
-	print("min: ",scores.min(),"   mean:",scores.mean())
+	num_round = 10
+	param = {'max_depth':6, 'eta':0.7, 'silent':1, 'objective':'binary:logistic'}
+	#param['nthread'] = 4
+	param['eval_metric'] = 'logloss'
+
+	d_evals_result = {}
+	eval_hist = xgb.cv(param, T_train_xgb, num_round, nfold=8,
+      					 metrics={'logloss'}, seed = 0, 
+      					 show_progress =True, show_stdv =True,
+      					 feval=evalerror)
+	print (eval_hist)
+
+	bst = xgb.train(param, T_train_xgb, num_round)
+	xgb.plot_importance(bst)	
+	bst.dump_model('img/dump.raw.txt','img/featmap.txt')
+
+	y_predict = bst.predict(T_train_xgb, output_margin=True)
+	y_predict = list(map (lambda x: int(x>0.5), y_predict))
+	y_predict = np.array(y_predict).astype(float)
+	#print (y_predict)
+	print ("\nConfustion Matrix:")
+	print (confusion_matrix(y,y_predict))
 	print ("\n")
-	if scores.min()>min: param_min = [i_samples, i_estimators]
-	if scores.mean()>mean: param_mean = [i_samples, i_estimators]
 
-	#print(clf.get_params(deep=True))
+	y_predict = bst.predict(T_test_xgb, output_margin=True)
+	y_predict = list(map (lambda x: int(x>0.5), y_predict))
+	y_predict = np.array(y_predict).astype(int)
+	#print (y_predict)
 
-	print ("min: ", param_min)
-	print ("mean: ", param_mean)
-
-
-
-	y = data[n_par:sum(has_surv),1]
-	X = data[n_par:sum(has_surv),2::]
-	y_predict = clf.predict(X)
-	print ("survived: ",sum (y=='1')/len(y))
-	print("Blind prediction: ", sum(y_predict==y)/len(y))
-
-	#save_tree_img ("img/tree.dot", clf, feature_names, class_names =["dead","survived"])
-
-
-	# predicting data
-	x_id = data[~has_surv,0]
-	X = data[~has_surv,2::]
-	y_predict = clf.predict(X)
-	print ("\ntest predict")
-	print ("survived: ",sum (y_predict=='1')/len(y_predict))
-
-
-	predictions_file = open("output/svm.csv", "w", newline='')
+	predictions_file = open("output/xgboost.csv", "w", newline='')
 	predictions_file_object = csv.writer(predictions_file)
 	predictions_file_object.writerow(["PassengerId", "Survived"])	
 	#predictions_file_object.writerow([pass_id, y_predict])
 
 	for i in range(len(y_predict)):														
-	    predictions_file_object.writerow([x_id[i], y_predict[i]])			
-														
+	    predictions_file_object.writerow([x_id[i], y_predict[i]])		
+
 if __name__ == "__main__":
     main()
