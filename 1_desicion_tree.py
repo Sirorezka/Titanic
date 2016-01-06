@@ -97,6 +97,9 @@ def main ():
 	# predicting data
 	x_id = data[~has_surv,0]
 	X = data[~has_surv,2::]
+
+	# x_id = data[:,0]
+	# X = data[:,2::]
 	y_predict = clf.predict(X)
 	#print (y_predict)
 
