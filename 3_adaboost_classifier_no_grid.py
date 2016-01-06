@@ -71,13 +71,6 @@ def main ():
 	#
 	# 	min:  0.810810810811 [24, 110]
 	#   mean:  0.842717473967 [14, 40]
-	#
-	#
-	# min:  0.781818181818 [13, 10]
-	# mean:  0.835917207792 [19, 10]
-	# test:  0.818385650224 [20, 20]
-
-
 
 	### Making prediction based on data sampled from train set
 	min_val = 0
@@ -87,48 +80,23 @@ def main ():
 	test_val = 0
 	param_test = [0,0]
 
-	for i_samples in range (10,25,1):
-		for i_estimators in range (10,250,10):
 
-			print (i_samples,i_estimators)
-			clf = ensemble.AdaBoostClassifier(
-			    tree.DecisionTreeClassifier(min_samples_leaf=i_samples),
-			    n_estimators=i_estimators,
-			    algorithm="SAMME.R", random_state=1567,
-			    learning_rate=0.1)
+	clf = ensemble.AdaBoostClassifier(
+	    tree.DecisionTreeClassifier(min_samples_leaf=19),
+	    n_estimators=10,
+	    algorithm="SAMME", random_state=1567,
+	    learning_rate=0.1)
 
-			clf = clf.fit(X_train, y_train)
-			scores = cross_val_score(clf, X_train, y_train, cv = 8, n_jobs=-1)
-
-			y_predict = clf.predict(X_test)
-
-			predict_test = sum(y_predict==y_test)/len(y_predict)
-			print ('Result on test data:', predict_test)
-
-			# print ("adaboost")
-			# print ("survived: ",sum (y=='1')/len(y))
-			# print (X.shape[0])
-			#print ("Crossvalidation scores: ")
-			#print (scores)
-			print("min: ",scores.min(),"   mean:",scores.mean())
-			# print ("\n")
-			if scores.min()>min_val: 
-				param_min = [i_samples, i_estimators]
-				min_val = scores.min()
-			if scores.mean()>mean_val: 
-				param_mean = [i_samples, i_estimators]
-				mean_val = scores.mean()
-			if predict_test>test_val: 
-				param_test = [i_samples, i_estimators]
-				test_val = predict_test			
+	clf = clf.fit(X, y)
+	scores = cross_val_score(clf, X, y, cv = 8, n_jobs=-1)
 
 
-	print ("min: ",min_val, param_min)
-	print ("mean: ",mean_val, param_mean)
-	print ("test: ",test_val, param_test)
-
-
-
+	print ("adaboost")
+	print ("survived: ",sum (y=='1')/len(y))
+	print (X.shape[0])
+	print ("Crossvalidation scores: ")
+	print (scores)
+	print("min: ",scores.min(),"   mean:",scores.mean())
 
 
 	#save_tree_img ("img/tree.dot", clf, feature_names, class_names =["dead","survived"])

@@ -32,11 +32,22 @@ def main ():
 	data = np.array(data) 									# Then convert from a list to an array.
 
 
-	# for i in range(len(header)):
-	# 	print (i," ",header[i])
+	cols_for_model = ["PassengerId", "Survived","Pclass","Mrs","Mr","Miss","Master",
+						"Captain","Other","is_female","Age_predict","Age_unknown",
+						"age_less_10","age_10_20","age_20_30","age_30_50","age_more_50",
+						"SibSp","Parch","Fare","No_cabin","Embarked_C","Embarked_Q",
+						"Embarked_S","Same_Ticket"
+						,"Same_Room_Surv","Same_Room_surv_perc"
+						]
+
+	col_remove = []
+	for i in range(len(header)):
+		if (header[i] not in cols_for_model): col_remove.append(i)
+
+	print ("Zero value test: ", len(cols_for_model)-(len(header)-len(col_remove)))
 
 
-	col_remove = [3, 5, 8, 12,14,15,17,18]               # Column 5 represent age
+
 	data = np.delete(data, col_remove,1)
 	header = np.delete(header,col_remove,0)
 
@@ -44,36 +55,70 @@ def main ():
 
 	### Collecting data for model
 	has_surv = (data[:,1] !='')
-	n_par = int(sum(has_surv)*0.75) 
-	
-	y = data[0:n_par,1]
-	X = data[0:n_par,2::]
-	# y = data[has_surv,1]
-	# X = data[has_surv,2::]
+
+	y = data[has_surv,1]
+	X = data[has_surv,2::]
 	feature_names = header[2:]
+
+	n_estim_min = 0
+	samples_leaf_min = 0
+	score_min = 0
+	n_estim_mean = 0
+	samples_leaf_mean = 0
+	score_mean = 0
+
+
+	### Best params:
+	###  100  19  min 0.8125
+	###  50   16  mean 0.833859468234
+	###
+	# grid search result
+	# 0.81981981982 70 11  - Min
+	# 0.83387957763 60 14  - Mean
+	# random_state  = 1013
 
 
 	### Making prediction based on data sampled from train set
+	# for i in range(10,25):
+	# 	for j in range (20,300,10):
+			#print (i,j)
 
-
-	clf = ensemble.RandomForestClassifier(n_estimators=720, min_samples_leaf =35)
+	clf = ensemble.RandomForestClassifier(n_estimators=70, min_samples_leaf =11,
+										  random_state  = 1013)
 	clf = clf.fit(X,y)
-	scores = cross_val_score(clf, X, y, cv = 8)
+	scores = cross_val_score(clf, X, y, cv = 8, n_jobs =5)
 	print ("survived: ",sum (y=='1')/len(y))
 	print (X.shape[0])
 	print ("Crossvalidation scores: ")
 	print (scores)
 	print("min: ",scores.min(),"mean: ",scores.mean())
-	print ("\n")
 
-	y = data[n_par:sum(has_surv),1]
-	X = data[n_par:sum(has_surv),2::]
-	y_predict = clf.predict(X)
-	print ("survived: ",sum (y=='1')/len(y))
-	print("Blind prediction: ", sum(y_predict==y)/len(y))
+			# print ("\n")
+			# if scores.min()>score_min:
+			# 	score_min = scores.min()
+			# 	n_estim_min = j
+			# 	samples_leaf_min = i
 
+			# if scores.mean()>score_mean:
+			# 	score_mean = scores.mean()
+			# 	n_estim_mean = j
+			# 	samples_leaf_mean = i
+
+	print ("grid search result")
+	print (score_min, n_estim_min, samples_leaf_min)
+	print (score_mean, n_estim_mean, samples_leaf_mean)
+
+
+	print ("\n \n \n")
 	#save_tree_img ("img/tree.dot", clf, feature_names, class_names =["dead","survived"])
-	print (clf.feature_importances_)
+	#print (clf.feature_importances_)
+
+	importances = clf.feature_importances_
+	indices = np.argsort(importances)[::-1]
+
+	for f in range(len(feature_names)):
+   		 print("%d. feature %s (%f)" % (f + 1, feature_names[f], importances[indices[f]]))
+
 
 	# predicting data
 	x_id = data[~has_surv,0]
