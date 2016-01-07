@@ -58,6 +58,8 @@ def main ():
 	has_surv = (data[:,1] !='')
 	y = data[has_surv,1].astype(float)
 	X = data[has_surv,2::]
+	X_nolabel = data[~has_surv,2::]
+	x_id = data[~has_surv,0]
 	feature_names = header[2:]
 
 
@@ -71,57 +73,92 @@ def main ():
 
 
 
+	## Error function
 	def evalerror(preds, dtrain):
 	    labels = dtrain.get_label()
 	    y_predict = list(map (lambda x: int(x>0.5), preds))
 	    return 'myerror', sum(labels != y_predict) / len(labels)
 
-	num_round = 7
-	param = {'max_depth':5, 'eta':0.7, 
-			 'silent':1, 'subsample':0.5,
-			 'lambda':0.1,
-			 'objective':'binary:logistic'}
+
+	file_path = "output/xgboost_params.csv"
+	xgb_params_file = open(file_path, "w", newline='')
+	xgb_params_file_object = csv.writer(xgb_params_file)
+	xgb_params_file.close()
 
 
-	#param['nthread'] = 4
-	param['eval_metric'] = 'logloss'
+	## n_round = 4
+	## max_depth = 6
+	## i_ets = 0.7
+	## i_subsample = 0.6
+	## i_lambda = 0.9
 
-	d_evals_result = {}
-	eval_hist = xgb.cv(param, T_train_xgb, num_round, nfold=8,
-      					 metrics={'logloss'}, seed = 25, 
-      					 show_progress =True, show_stdv =True,
-      					 feval=evalerror)
-	print (eval_hist)
-	scores_cv = eval_hist['test-myerror-mean'][num_round-1]
-	print ("Cross validation score: ", scores_cv)
+	for i_num_round in range(6,7,1):
+		for i_max_depth in range(8,9,1):
+			for i_eta in range(7,8,1):
+				for i_subsample in range(6,7,1):
+					for i_lambda in range(9,10,1):
 
-	bst = xgb.train(param, T_train_xgb, num_round)
-	# xgb.plot_importance(bst)	
-	# bst.dump_model('img/dump.raw.txt','img/featmap.txt')
+						num_round = i_num_round
+						param = {'max_depth':i_max_depth, 'eta':i_eta/10.0, 
+								 'silent':1, 'subsample':i_subsample/10.0,
+								 'lambda':i_lambda/10.0, 'num_round': 4,
+								 'objective':'binary:logistic'}
+					
+						#param['nthread'] = 4
+						param['eval_metric'] = 'logloss'
 
-	y_predict = bst.predict(T_test_xgb, output_margin=True)
-	y_predict = list(map (lambda x: int(x>0.5), y_predict))
-	y_predict = np.array(y_predict).astype(float)
+						d_evals_result = {}
+						eval_hist = xgb.cv(param, T_train_xgb, num_round, nfold=8,
+					      					 metrics={'logloss'}, seed = 25, 
+					      					 show_progress =False, show_stdv =True,
+					      					 feval=evalerror)
+						#print (eval_hist)
+						scores_cv = 1-  eval_hist['test-myerror-mean'][num_round-1]
+						# print ("Cross validation score: ", scores_cv)
+
+						bst = xgb.train(param, T_train_xgb, num_round)
+						y_predict = bst.predict(T_test_xgb)
+						y_predict = list(map (lambda x: int(x>0.6), y_predict))
+						y_predict = np.array(y_predict).astype(float)
+						score_test = sum(y_test==y_predict)/len(y_test)
+
+						#print (i_num_round,i_max_depth)
+						print (i_num_round,i_max_depth," -- ",scores_cv,score_test)
+
+						with open(file_path, 'a', newline='') as f:
+							f_object = csv.writer(f)
+							f_object.writerow([i_num_round, 
+											   i_max_depth, round(i_eta/10.0,2),
+											   round(i_subsample/10.0,2), round(i_lambda/10.0,2),
+											   scores_cv, score_test
+												])
+
+
+
+
+	T_train_xgb = xgb.DMatrix(X.astype(float), label=y.astype(float))
+	X = data[:,2::]
+	x_id = data[:,0]
+	T_test_xgb = xgb.DMatrix(X.astype(float))
+
+	bst = xgb.train(param, T_train_xgb, num_round)	
+
+	y_predict = bst.predict(T_test_xgb)
+	y_probab = np.copy(y_predict)
 	#print (y_predict)
-
-	print ("\nConfustion Matrix:")
-	print (confusion_matrix(y_test,y_predict))
-	print ("Percent matches score: ",sum(y_test==y_predict)/len(y_test))
-	print ("\n")
-	score_test = sum(y_test==y_predict)/len(y_test)
-
-	y_predict = bst.predict(T_test_xgb, output_margin=True)
-	y_predict = list(map (lambda x: int(x>0.5), y_predict))
+	y_predict = list(map (lambda x: int(x>0.6), y_predict))
 	y_predict = np.array(y_predict).astype(int)
-	#print (y_predict)
 
-	predictions_file = open("output/xgboost.csv", "w", newline='')
+	print (sum(y_predict==1)/len(y_predict))
+
+	predictions_file = open("output/prob_xgboost.csv", "w", newline='')
 	predictions_file_object = csv.writer(predictions_file)
 	predictions_file_object.writerow(["PassengerId", "Survived"])	
 	#predictions_file_object.writerow([pass_id, y_predict])
 
-	for i in range(len(y_predict)):														
-	    predictions_file_object.writerow([x_id[i], y_predict[i]])		
+	for i in range(len(y_predict)):	
+		#predictions_file_object.writerow([x_id[i], y_predict[i]])														
+	    predictions_file_object.writerow([x_id[i], y_predict[i],1-y_probab[i],y_probab[i]])		
 
 if __name__ == "__main__":
-    main()
+	main()

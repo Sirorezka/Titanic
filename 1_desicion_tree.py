@@ -98,19 +98,21 @@ def main ():
 	x_id = data[~has_surv,0]
 	X = data[~has_surv,2::]
 
-	# x_id = data[:,0]
-	# X = data[:,2::]
+	x_id = data[:,0]
+	X = data[:,2::]
 	y_predict = clf.predict(X)
+	y_prob = clf.predict_proba(X)
+	print (y_prob)
 	#print (y_predict)
 
 
-	predictions_file = open("output/decisiontree.csv", "w", newline='')
+	predictions_file = open("output/prob_decisiontree.csv", "w", newline='')
 	predictions_file_object = csv.writer(predictions_file)
 	predictions_file_object.writerow(["PassengerId", "Survived"])	
 	#predictions_file_object.writerow([pass_id, y_predict])
 
 	for i in range(len(y_predict)):														
-	    predictions_file_object.writerow([x_id[i], y_predict[i]])			
+	    predictions_file_object.writerow([x_id[i], y_predict[i],y_prob[i,0],y_prob[i,1]])			
 														
 if __name__ == "__main__":
     main()
