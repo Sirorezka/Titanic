@@ -102,6 +102,12 @@ def main ():
 	#save_tree_img ("img/tree.dot", clf, feature_names, class_names =["dead","survived"])
 
 
+	X_train, X_test, y_train, y_test = train_test_split(
+					X, y, train_size=0.7, random_state=13)
+
+
+	clf = clf.fit(X_train, y_train)
+
 	# predicting data
 	x_id = data[~has_surv,0]
 	X = data[~has_surv,2::]

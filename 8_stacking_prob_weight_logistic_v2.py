@@ -51,12 +51,13 @@ def main ():
 	data = data [:,0:2]
 
 	data = load_and_append (data,"output/prob_adaboost.csv")
-	data = load_and_append (data,"output/prob_decisiontree.csv")
-	data = load_and_append (data,"output/prob_random_forest.csv")
+#	data = load_and_append (data,"output/prob_decisiontree.csv")
+#	data = load_and_append (data,"output/prob_random_forest.csv")
 	data = load_and_append (data,"output/prob_svm.csv")
 	data = load_and_append (data,"output/prob_xgboost.csv")
-	data = load_and_append (data,"output/prob_logistic.csv")
+#	data = load_and_append (data,"output/prob_logistic.csv")
 	header = ["id","surv","adaboost","decistree","rand_forest","svm","xgboost","logistic"]
+
 
 
 	print (header)
@@ -69,6 +70,7 @@ def main ():
 	X = np.copy(data[has_surv,2:]).astype(float)
 	X_train, X_test, y_train, y_test = train_test_split(
 									X[:,:], y, train_size=0.75, random_state=687)
+
 
 	print ("surv all: ",sum(y==1)/len(y))
 	print ("surv train: ",sum(y_train==1)/len(y_train))
@@ -96,8 +98,8 @@ def main ():
 
 
 
-	clf = LogisticRegression(penalty=i_norm,C = 5, n_jobs = -1)
-	
+	clf = LogisticRegression(penalty=i_norm,C = 4.17, n_jobs = -1)
+
 	clf.fit(X_train,y_train)
 	X_no_label = data[~has_surv,2:].astype(float)
 	x_id = data[~has_surv,0]

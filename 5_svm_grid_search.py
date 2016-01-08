@@ -127,8 +127,12 @@ def main ():
 	    print()
 
 
+	X_train, X_test, y_train, y_test = train_test_split(
+					X, y, train_size=0.7, random_state=13)
+
 	clf = svm.SVC(C=15,random_state=512,gamma=0.001,probability=True)
-	clf.fit(X, y)	
+	clf.fit(X_train, y_train)	
+	
 	#print(clf.best_params_)
 	X_nolabel = data[:,2::]
 	x_id = data[:,0]

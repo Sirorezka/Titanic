@@ -59,6 +59,7 @@ def main ():
 	header = ["id","surv","adaboost","decistree","rand_forest","svm","xgboost","logistic"]
 
 
+
 	print (header)
 
 	feature_names = header[2:]
@@ -70,44 +71,34 @@ def main ():
 	X_train, X_test, y_train, y_test = train_test_split(
 									X[:,:], y, train_size=0.75, random_state=687)
 
+
 	print ("surv all: ",sum(y==1)/len(y))
 	print ("surv train: ",sum(y_train==1)/len(y_train))
 	print ("surv test: ",sum(y_test==1)/len(y_test))
 
 
-	i_norm = 'l2'
+	probs = np.average(X, axis = 1)
+	#print (probs)
 
-	c_range = np.linspace (0.01,5,25)
-	print(c_range)
-	i_c = 2
-	for i_c in c_range:
-		clf = LogisticRegression(penalty=i_norm,C = i_c, n_jobs = -1)
-		scores = cross_val_score(clf, X_train, y_train, cv = 8, n_jobs=-1)
-		clf.fit(X_train,y_train)
-		y_predict = clf.predict(X_test)
-		x_prob = clf.predict_proba(X_test)
-		score_cv_min = round(scores.min(),4)
-		score_cv_mean = round(scores.mean(),4)
-		score_acc = round(sum(y_predict==y_test)/len(y_test),4)
-		score_f1 = round(f1_score(y_test,y_predict),4)
-		
-		#print (scores)
-		print ("Results: ",round(i_c,2), score_cv_min, score_cv_mean, score_acc, score_f1)
+	i_lsp = np.linspace (0,1,20)
+	for i in i_lsp:
+		y_predict = (probs>=i).astype(int)
+		score_acc = sum (y_predict==y)/len(y)
+
+		print (round(i,2),score_acc)
 
 
 
-	clf = LogisticRegression(penalty=i_norm,C = 5, n_jobs = -1)
-	
-	clf.fit(X_train,y_train)
 	X_no_label = data[~has_surv,2:].astype(float)
+	probs = np.average(X_no_label, axis = 1)
+	p_predict = (probs>=0.5).astype(int)
 	x_id = data[~has_surv,0]
-	p_predict = clf.predict(X_no_label).astype(int)
-	#print (p_predict)
+
 	perc_surv = round(sum(p_predict==1)/len(p_predict),4)
 	print ("survived: ", perc_surv)
 
 
-	predictions_file = open("output/stacking_prob_logistic.csv", "w", newline='')
+	predictions_file = open("output/stacking_prob_all.csv", "w", newline='')
 
 	predictions_file_object = csv.writer(predictions_file)
 	predictions_file_object.writerow(["PassengerId", "Survived"])	
