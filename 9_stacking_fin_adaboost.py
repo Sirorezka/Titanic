@@ -89,36 +89,42 @@ def main ():
 	# 	print ("Results: ",round(i_c,2), score_cv_min, score_cv_mean, score_acc, score_f1)
 
 
-	### ALSO YOU CAN TRY TO USE 10!!!
-	i_c = 4.1
-	clf = LogisticRegression(penalty=i_norm,C = i_c, n_jobs = -1)
-	scores = cross_val_score(clf, X_train, y_train, cv = 8, n_jobs=-1)
-	print (scores)
-	clf.fit(X_train,y_train)
 
 
 	## Test score 0.8208 when prob = 0.57
-	i_rn = np.linspace (0,1,20)
-	y_pred = clf.predict_proba (X_test)[:,1]
-	for i in i_rn:
-		c_score = sum((y_pred>=i).astype(int)==y_test)/len(y_test)
-	 	print (i, c_score)
+
+
+	for i_samples in range (10,11,1):
+		for i_estimators in range (10,11,1):
+
+			clf = ensemble.AdaBoostClassifier(
+				    tree.DecisionTreeClassifier(min_samples_leaf=i_samples),
+				    n_estimators=i_estimators,
+				    algorithm="SAMME.R", random_state=1567,
+				    learning_rate=0.1)
+
+			clf = clf.fit(X_train, y_train)
+			scores = cross_val_score(clf, X_train, y_train, cv = 8, n_jobs=-1)
+			y_predict = clf.predict(X_test)
+			score_acc = round(sum(y_predict==y_test)/len(y_test),4)
+
+			print (i_samples, i_estimators, scores.min(), scores.mean(),score_acc)
 
 
 	x_id = np.copy(data[~has_surv,0])
 	X_nolabel = data[~has_surv,2:].astype(float)
-	print (X_nolabel.shape)
+	#print (X_nolabel.shape)
 
-
+	clf = clf.fit(X_train, y_train)
 
 	#y_predict = clf.predict(X_nolabel).astype(int)
-	y_proba =  (clf.predict_proba(X_nolabel)[:,1]>=0.57).astype(int)
+	y_proba =  clf.predict(X_nolabel).astype(int)
 	y_predict = y_proba
 
 	prob_surv = round(sum(y_predict==1)/len(y_predict),4)
 	print ("predicted data: ", prob_surv)
 
-	predictions_file = open("output/stacking2_logistic.csv", "w", newline='')
+	predictions_file = open("output/stacking2_adaboost.csv", "w", newline='')
 
 	predictions_file_object = csv.writer(predictions_file)
 	predictions_file_object.writerow(["PassengerId", "Survived"])	
